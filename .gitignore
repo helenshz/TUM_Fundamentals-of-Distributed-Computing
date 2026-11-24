@@ -1,0 +1,21 @@
+# Dependencies (can be regenerated with npm install)
+node_modules/
+
+# Files containing database passwords
+.env
+
+# Lecture slides
+*.pdf
+
+# Course-slide notes and downloaded sample data; verify permissions before publishing
+/03/lecture03-notes.md
+/05/async-notes.md
+/05/example.txt
+
+# OS / editor generated files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Logs
+npm-debug.log*
