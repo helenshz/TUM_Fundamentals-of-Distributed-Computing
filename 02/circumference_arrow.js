@@ -1,6 +1,4 @@
-circumference = (radius) => {
-    return 2 * Math.PI * radius;
-}
+circumference = (radius) => 2 * Math.PI * radius;
 
 const radius = 10;
 
