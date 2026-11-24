@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Twitter Client</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:20px}
+    form{margin-bottom:1rem}
+    input,textarea{display:block;width:100%;max-width:480px;margin:6px 0;padding:8px}
+    button{padding:8px 12px}
+    .tweet{border:1px solid #ddd;padding:8px;margin:6px 0;border-radius:6px}
+    .meta{color:#666;font-size:0.9rem}
+  </style>
+</head>
+<body>
+  <h1>Mini Twitter — Client</h1>
+  <form id="sendForm">
+    <label>
+      Name
+      <input id="name" name="name" placeholder="Your name" required />
+    </label>
+    <label>
+      Message
+      <textarea id="text" name="text" rows="3" placeholder="What's happening?" required></textarea>
+    </label>
+    <button type="submit">Send</button>
+  </form>
+
+  <button id="refresh">Refresh tweets</button>
+  <div id="status" aria-live="polite"></div>
+  <h2>Tweets</h2>
+  <div id="tweets"></div>
+
+  <script>
+    // If your server runs on a different host/port, set BASE_URL accordingly, e.g.:
+    // const BASE_URL = 'http://localhost:3000';
+    const BASE_URL = '';
+
+    const form = document.getElementById('sendForm');
+    const tweetsEl = document.getElementById('tweets');
+    const statusEl = document.getElementById('status');
+    const refreshBtn = document.getElementById('refresh');
+
+    async function loadTweets(){
+      statusEl.textContent = 'Loading...';
+      try{
+        const res = await fetch(`${BASE_URL}/tweets`);
+        if(!res.ok) throw new Error('Failed to load tweets: ' + res.status);
+        const data = await res.json();
+        renderTweets(data);
+        statusEl.textContent = '';
+      }catch(err){
+        statusEl.textContent = 'Error loading tweets: ' + err.message;
+      }
+    }
+
+    function renderTweets(list){
+      tweetsEl.innerHTML = '';
+      if(!Array.isArray(list) || list.length===0){
+        tweetsEl.textContent = 'No tweets yet.';
+        return;
+      }
+      list.slice().reverse().forEach(t => {
+        const d = document.createElement('div');
+        d.className = 'tweet';
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = (t.sender || 'anonymous') + ' — ' + (t.time || '');
+        const body = document.createElement('div');
+        body.textContent = t.message || '';
+        d.appendChild(meta);
+        d.appendChild(body);
+        tweetsEl.appendChild(d);
+      });
+    }
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const text = document.getElementById('text').value.trim();
+      if(!text) return;
+      statusEl.textContent = 'Sending...';
+      try{
+
+        const payload = { tweet: { sender: name, message: text }  };
+        // Try JSON POST; many simple servers accept JSON. If your server expects form data change Content-Type accordingly.
+        const res = await fetch(`${BASE_URL}/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if(!res.ok){
+          const txt = await res.text();
+          throw new Error('Server error ' + res.status + ': ' + txt);
+        }
+        statusEl.textContent = 'Sent.';
+        form.reset();
+        loadTweets();
+      }catch(err){
+        statusEl.textContent = 'Send failed: ' + err.message;
+      }
+    });
+
+    refreshBtn.addEventListener('click', loadTweets);
+
+    // initial load
+    loadTweets();
+  </script>
+</body>
+</html>
